@@ -7,6 +7,7 @@ export function initMermaid() {
     startOnLoad: false,
     theme: 'dark',
     securityLevel: 'strict',
+    suppressErrorRendering: true,
     deterministicIds: true,
     fontFamily: 'Arial',
     htmlLabels: false,

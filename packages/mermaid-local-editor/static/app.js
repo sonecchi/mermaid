@@ -13,7 +13,6 @@ const nameInput = document.getElementById('name');
 const storage = createStorage();
 const navigation = createNavigation({
   state,
-  preview,
   srcPanel,
   applyTransform,
 });
@@ -25,6 +24,7 @@ function render() {
     state,
     IS_E2E,
     applyTransform,
+    fitDiagram: navigation.fitDiagram,
     rebuildNavNodes: navigation.rebuildNavNodes,
   });
 }
@@ -73,7 +73,7 @@ setupUI({
   state,
   render,
   load,
-  applyTransform,
+  fitDiagram: navigation.fitDiagram,
 });
 
 navigation.setupKeyboardNav();

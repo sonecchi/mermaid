@@ -18,7 +18,7 @@ export function setupUI({
   state,
   render,
   load,
-  applyTransform,
+  fitDiagram,
 }) {
   document.getElementById('save').onclick = () => {
     const name = nameInput.value.trim();
@@ -54,10 +54,7 @@ export function setupUI({
   };
 
   document.getElementById('resetView').onclick = () => {
-    state.scale = 1;
-    state.panX = 0;
-    state.panY = 0;
-    applyTransform(); // this will save the reset to storage.diagrams[storage.current].view
+    fitDiagram();
   };
 
   document.getElementById('exportSvg').onclick = () => {
@@ -83,9 +80,11 @@ export function setupUI({
 
   diagramsSelect.onchange = () => load(diagramsSelect.value);
 
+  let renderTimer;
   let saveTimer;
   src.addEventListener('input', () => {
-    render();
+    clearTimeout(renderTimer);
+    renderTimer = setTimeout(() => render(), 200);
 
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {

@@ -6,6 +6,7 @@ export async function renderDiagram({
   state,
   IS_E2E,
   applyTransform,
+  fitDiagram,
   rebuildNavNodes,
 }) {
   try {
@@ -56,10 +57,6 @@ export async function renderDiagram({
     doc.close();
     doc.body.appendChild(doc.importNode(svgEl, true));
 
-    setTimeout(() => {
-      rebuildNavNodes();
-    }, 0);
-
     requestAnimationFrame(() => {
       const svgEl = iframe.contentDocument?.querySelector('svg');
       if (!svgEl) {
@@ -68,6 +65,8 @@ export async function renderDiagram({
 
       svgEl.style.transformOrigin = '0 0';
       svgEl.style.display = 'block';
+      fitDiagram();
+      rebuildNavNodes();
     });
 
     const style = doc.createElement('style');
@@ -121,7 +120,7 @@ export async function renderDiagram({
     doc.onwheel = (e) => {
       e.preventDefault();
       state.scale += e.deltaY * -0.0015;
-      state.scale = Math.min(Math.max(0.2, state.scale), 4);
+      state.scale = Math.min(Math.max(0.05, state.scale), 4);
       applyTransform();
     };
 

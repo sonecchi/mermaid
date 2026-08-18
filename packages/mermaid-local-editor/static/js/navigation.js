@@ -1,6 +1,30 @@
-export function createNavigation({ state, preview, srcPanel, applyTransform }) {
+export function createNavigation({ state, srcPanel, applyTransform }) {
+  const fitPadding = 24;
   let navNodes = [];
   let navIndex = 0;
+
+  function fitDiagram() {
+    const iframe = state.iframeRef;
+    const svg = iframe?.contentDocument?.querySelector('svg');
+    if (!iframe || !svg) {
+      return;
+    }
+
+    svg.style.transform = 'none';
+    const svgRect = svg.getBoundingClientRect();
+    if (!svgRect.width || !svgRect.height || !iframe.clientWidth || !iframe.clientHeight) {
+      return;
+    }
+
+    const availableWidth = Math.max(iframe.clientWidth - fitPadding * 2, 1);
+    const availableHeight = Math.max(iframe.clientHeight - fitPadding * 2, 1);
+    const scale = Math.min(availableWidth / svgRect.width, availableHeight / svgRect.height, 1);
+
+    state.scale = scale;
+    state.panX = (iframe.clientWidth - svgRect.width * scale) / 2 - svgRect.left;
+    state.panY = (iframe.clientHeight - svgRect.height * scale) / 2 - svgRect.top;
+    applyTransform();
+  }
 
   function rebuildNavNodes() {
     navNodes = [];
@@ -16,7 +40,6 @@ export function createNavigation({ state, preview, srcPanel, applyTransform }) {
 
     if (navNodes.length) {
       highlightCurrentNode();
-      centerCurrentNode();
     }
   }
 
@@ -37,23 +60,20 @@ export function createNavigation({ state, preview, srcPanel, applyTransform }) {
   }
 
   function centerCurrentNode() {
+    const iframe = state.iframeRef;
     const node = navNodes[navIndex];
-    if (!node) {
+    if (!iframe || !node) {
       return;
     }
 
     const nodeRect = node.getBoundingClientRect();
-    const contRect = preview.getBoundingClientRect();
+    const nodeCenterY = nodeRect.top + nodeRect.height / 2;
+    const viewportCenterY = iframe.clientHeight / 2;
+    const deltaY = viewportCenterY - nodeCenterY;
 
-    const nodeCenterY = nodeRect.top + nodeRect.height / 6;
-    const contCenterY = contRect.top + contRect.height / 6;
-    const deltaY = contCenterY - nodeCenterY;
-
-    // Intentionally biased to upper-left instead of strict center,
-    // so forward nodes remain visible in LR / TD diagrams.
-    const nodeCenterX = nodeRect.left + nodeRect.width / 6;
-    const contCenterX = contRect.left + contRect.width / 6;
-    const deltaX = contCenterX - nodeCenterX;
+    const nodeCenterX = nodeRect.left + nodeRect.width / 2;
+    const viewportCenterX = iframe.clientWidth / 2;
+    const deltaX = viewportCenterX - nodeCenterX;
 
     state.panX += deltaX;
     state.panY += deltaY;
@@ -90,6 +110,7 @@ export function createNavigation({ state, preview, srcPanel, applyTransform }) {
   }
 
   return {
+    fitDiagram,
     rebuildNavNodes,
     setupKeyboardNav,
   };
