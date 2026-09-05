@@ -10,6 +10,20 @@ export function refreshList({ diagramsSelect, nameInput, storage }) {
   nameInput.value = storage.current;
 }
 
+function downloadJson(filename, data) {
+  const blob = new Blob([`${JSON.stringify(data, null, 2)}\n`], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+function createBackupFilename() {
+  return `mermaid-local-editor-backup-${new Date().toISOString().slice(0, 10)}.json`;
+}
+
 export function setupUI({
   src,
   diagramsSelect,
@@ -76,6 +90,45 @@ export function setupUI({
     a.click();
 
     URL.revokeObjectURL(url);
+  };
+
+  document.getElementById('backupJson').onclick = () => {
+    storage.updateCurrent({
+      src: src.value,
+      view: { scale: state.scale, panX: state.panX, panY: state.panY },
+    });
+    downloadJson(createBackupFilename(), storage.createBackup());
+  };
+
+  const restoreJsonInput = document.getElementById('restoreJsonInput');
+  document.getElementById('restoreJson').onclick = () => {
+    restoreJsonInput.value = '';
+    restoreJsonInput.click();
+  };
+
+  restoreJsonInput.onchange = async () => {
+    const [file] = restoreJsonInput.files;
+    if (!file) {
+      return;
+    }
+
+    try {
+      const backup = JSON.parse(await file.text());
+      const summary = storage.validateBackup(backup);
+      const shouldRestore = confirm(
+        `Restore ${summary.diagramCount} diagram(s) and replace all current diagrams?`
+      );
+      if (!shouldRestore) {
+        return;
+      }
+
+      load(storage.restoreBackup(backup));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      alert(`Could not restore Mermaid backup: ${message}`);
+    } finally {
+      restoreJsonInput.value = '';
+    }
   };
 
   diagramsSelect.onchange = () => load(diagramsSelect.value);
